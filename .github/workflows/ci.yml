@@ -1,0 +1,24 @@
+name: CI
+ 
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+ 
+jobs:
+  cpp-build:
+    name: C++ Build + Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ \
+            libpcap-dev
+ 
+      - name: Build (stub)
+        run: echo "C++ build step added Day 3"
