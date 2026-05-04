@@ -18,8 +18,9 @@ Copy the example env file to the project root:
 cp scripts/.env.example .env
 ```
 
-Edit `.env` with your values. The defaults work for local
-Docker Compose development without modification.
+The defaults work for local Docker Compose development without modification.
+Only edit .env if you are deploying outside of local Docker Compose and
+need to change credentials, hostnames, or ports.
 
 ## Running with Docker Compose
 
