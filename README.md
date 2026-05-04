@@ -17,7 +17,7 @@ pipeline, and a React dashboard — connected by RabbitMQ and MongoDB.
 | C++ → RabbitMQ | AMQP, JSON | One enriched frame per message, topic exchange |
 | RabbitMQ → Spring Boot | AMQP, `@RabbitListener` | Spring consumes `raw_packets.spring` queue |
 | Spring Boot → MongoDB | MongoDB driver | Writes `traffic_flows` — one document per frame |
-| Spring Boot → React | SSE | Live telemetry stream + anomaly alerts |
+| Spring Boot → React | SSE | Live telemetry stream + anomaly alerts + Historical data |
 | Spring Boot → Python | gRPC / protobuf | `PacketBatch` messages, batched for efficiency |
 | Python → Spring Boot | gRPC / protobuf | `AnomalyEvent` with rule name + evidence |
 | Python → MongoDB | MongoDB driver | Writes `anomaly_events` + `baseline_stats` directly |
@@ -77,10 +77,10 @@ cmake --preset ci
 # Reset MongoDB collections + RabbitMQ queues between test runs
 ./scripts/reset.sh
 
-# Watch live SSE stream (Day 40+)
+# Watch live SSE stream 
 ./scripts/sse_tail.sh
 
-# Simulate attacks for rule testing (Day 40+)
+# Simulate attacks for rule testing 
 python scripts/simulate_attack.py
 ```
 
@@ -123,7 +123,7 @@ All collections have TTL indexes on `timestamp`. Schema defined in
 
 ## Key Design Decisions
 
-Full rationale in [docs/architecture.md](docs/architecture.md) (added Day 24).
+Full rationale in [docs/architecture.md](docs/architecture.md).
 
 - **C++ parses, Java does not re-parse** — frames arrive at Spring Boot as
   fully enriched JSON with all 30 fields already attached. Spring Boot
