@@ -188,6 +188,7 @@ comparing against recent per-flow behaviour rather than stale averages.
 Neither alone is sufficient. Together they eliminate the two main sources
 of false positives: stale per-flow baselines and a model that only knows
 CICIDS2017 patterns.
+
 ---
 
 ## Key Design Decisions
