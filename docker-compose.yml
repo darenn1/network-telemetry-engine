@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: telemetry-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP — C++ publisher + Spring Boot consumer
+      - "15672:15672"   # Management UI — http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER:  ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS:  ${RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    volumes:
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - rabbitmq_data:/var/lib/rabbitmq
+    configs:
+      - source: rabbitmq_config
+        target: /etc/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+      start_period: 15s
+    restart: unless-stopped
+volumes:
+  rabbitmq_data:
+    driver: local
+configs:
+  rabbitmq_config:
+    content: |
+      load_definitions = /etc/rabbitmq/definitions.json
+      heartbeat = 60
+      management.tcp.port = 15672
+      log.console = true
+      log.console.level = info

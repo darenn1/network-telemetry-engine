@@ -1,0 +1,107 @@
+{
+  "vhosts": [
+    { "name": "/" }
+  ],
+
+  "users": [
+    {
+      "name": "guest",
+      "password": "guest",
+      "tags": "administrator"
+    }
+  ],
+
+  "permissions": [
+    {
+      "user":      "guest",
+      "vhost":     "/",
+      "configure": ".*",
+      "write":     ".*",
+      "read":      ".*"
+    }
+  ],
+
+  "exchanges": [
+    {
+      "name":        "raw_packets",
+      "vhost":       "/",
+      "type":        "topic",
+      "durable":     true,
+      "auto_delete": false,
+      "internal":    false,
+      "arguments":   {}
+    },
+    {
+      "name":        "raw_packets.dead_letter",
+      "vhost":       "/",
+      "type":        "fanout",
+      "durable":     true,
+      "auto_delete": false,
+      "internal":    false,
+      "arguments":   {}
+    }
+  ],
+
+  "queues": [
+    {
+      "name":       "raw_packets.spring",
+      "vhost":      "/",
+      "durable":    true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length":            100000,
+        "x-max-length-bytes":      104857600,
+        "x-overflow":              "drop-head",
+        "x-message-ttl":           60000,
+        "x-dead-letter-exchange":  "raw_packets.dead_letter"
+      }
+    },
+    {
+      "name":       "raw_packets.failed",
+      "vhost":      "/",
+      "durable":    true,
+      "auto_delete": false,
+      "arguments":  {}
+    }
+  ],
+
+  "bindings": [
+    {
+      "source":           "raw_packets",
+      "vhost":            "/",
+      "destination":      "raw_packets.spring",
+      "destination_type": "queue",
+      "routing_key":      "packet.#",
+      "arguments":        {}
+    },
+    {
+      "source":           "raw_packets.dead_letter",
+      "vhost":            "/",
+      "destination":      "raw_packets.failed",
+      "destination_type": "queue",
+      "routing_key":      "#",
+      "arguments":        {}
+    }
+  ],
+
+  "global_parameters": [
+    {
+      "name":  "cluster_name",
+      "value": "network-telemetry"
+    }
+  ],
+
+  "policies": [
+    {
+      "vhost":      "/",
+      "name":       "ha-raw-packets",
+      "pattern":    "raw_packets.*",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority":   0,
+      "apply-to":   "queues"
+    }
+  ]
+}

@@ -91,8 +91,8 @@ python scripts/simulate_attack.py
 | Collection | Written by | Contents |
 |---|---|---|
 | `traffic_flows` | Spring Boot | One document per captured frame — all 30 fields |
-| `anomaly_events` | Python pipeline | Rule name, src/dst IP, evidence, timestamp |
-| `baseline_stats` | Python pipeline | Flow key, mean, std dev, percentile buckets |
+| `anomaly_events` | Python pipeline | Rule name, src/dst IP, evidence, timestamp, source (threshold or isolation_forest)|
+| `baseline_stats` | Python pipeline | Flow key, mean, std dev, percentile buckets, window_start, source (cicids2017 or live_traffic) |
 
 All collections have TTL indexes on `timestamp`. Schema defined in
 `infra/mongo/init-collections.js`.
@@ -121,6 +121,75 @@ All collections have TTL indexes on `timestamp`. Schema defined in
 
 ---
 
+## Anomaly Detection Strategy
+Detection runs in two parallel layers on every gRPC batch received from Spring Boot.
+
+### Layer 1 — Threshold Rules (Rules 1-15)
+Runs on individual frames. No training required. Fires on the first matching packet.
+Catches known attack signatures with exact conditions — SYN flood, ARP spoof,
+NULL scan, XMAS scan, oversized ICMP. Results carry source: "threshold" in the
+AnomalyEvent.
+
+### Layer 2 — Isolation Forest (Beaconing + Bandwidth Spike + Generic ML)
+Runs on flow-level feature vectors aggregated from frames across 13 dimensions:
+packet_count, total_bytes, duration_ms, bytes_per_second, mean_packet_size,
+std_packet_size, min_packet_size, max_packet_size, syn_count, syn_ack_count,
+rst_count, retransmit_count, unique_dst_ports, direction_ratio, ttl_std.
+
+Two named detectors are wired explicitly:
+- beaconing.py    — suspiciously regular connection intervals (low std deviation)
+- bandwidth_spike.py — bytes per flow exceeding learned per-flow baseline by 3x
+
+Beyond these two, the model catches any flow that deviates significantly from
+learned normal traffic — slow port scans below Rule 11 threshold, low-rate
+exfiltration, unusual protocol ratios, abnormal host behaviour, zero-byte flows,
+and novel attack patterns with no known signature.
+
+All ML detections carry source: "isolation_forest" in AnomalyEvent regardless
+of whether they match a named detector or are caught generically by the model.
+
+### Cold Start — CICIDS2017 Seed 
+On first deployment the model has no real traffic to learn from.
+scripts/seed_baseline.py reads data/labeled_flows.csv which is built from
+the CICIDS2017 Monday dataset (normal traffic only) mapped to the 13 ML
+feature schema. This gives the model a starting point before real traffic
+accumulates. source field in baseline_stats is set to "cicids2017".
+
+### 13 ML Features (flow-level, not per-packet)
+packet_count, total_bytes, duration_ms, bytes_per_second,
+mean_packet_size, std_packet_size, min_packet_size, max_packet_size,
+syn_count, syn_ack_count, rst_count, retransmit_count,
+unique_dst_ports, direction_ratio, ttl_std
+
+These are computed by feature_extractor.py by aggregating all frames
+sharing the same flow_key within a batch.
+
+### 24-Hour Auto-Retrain
+retraining_scheduler.py runs hourly inside the Python container.
+When MongoDB traffic_flows contains >= 24 hours AND >= 10000 frames:
+    - extract_flow_features_from_mongo() reads last 24hrs from traffic_flows
+    - save_to_csv() overwrites data/labeled_flows.csv (source: "live_mongo")
+    - model_trainer.py retrains IsolationForest + StandardScaler
+    - models/isolation_forest.joblib and models/scaler.joblib replaced
+    - baseline_stats updated in MongoDB (source changes to "live_traffic")
+    - server.py watchdog detects model file change and hot-reloads
+Model improves daily as more real traffic accumulates.
+
+### 5-Minute Baseline Upsert
+baseline_manager.py runs continuously inside the Python container.
+Every 5 minutes it recomputes per-flow rolling statistics (mean, std_dev,
+percentile_buckets) from recent traffic_flows documents and upserts
+baseline_stats in MongoDB. This keeps Rule 14 (bandwidth_spike.py)
+comparing against recent per-flow behaviour rather than stale averages.
+
+### Two Timescales — Why Both Are Needed
+5-minute upsert handles sub-daily variance per individual flow.
+24-hour retrain handles the global model learning your real traffic patterns.
+Neither alone is sufficient. Together they eliminate the two main sources
+of false positives: stale per-flow baselines and a model that only knows
+CICIDS2017 patterns.
+---
+
 ## Key Design Decisions
 
 Full rationale in [docs/architecture.md](docs/architecture.md).
@@ -145,3 +214,12 @@ Full rationale in [docs/architecture.md](docs/architecture.md).
   strict frame ordering requirements for stateful rules. Spring Boot's three
   operations per frame (MongoDB write, SSE broadcast, gRPC batch) are
   independent and benefit from parallel execution.
+
+- **Two-layer detection with two timescales** — threshold rules fire
+  immediately on individual frames with no training required. Isolation
+  Forest fires on flow-level features after model training. The 5-minute
+  baseline upsert and 24-hour model retrain operate independently at
+  different timescales to eliminate different classes of false positives.
+  A 7-day rolling window was considered and rejected — the 5-minute upsert
+  already handles daily variance per flow, and 7 days creates memory
+  pressure and TTL index conflicts with no accuracy gain at this traffic volume.
