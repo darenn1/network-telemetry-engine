@@ -19,6 +19,10 @@ jobs:
           sudo apt-get install -y \
             cmake ninja-build g++ \
             libpcap-dev
+      - name: Configure 
+        working-directory: cpp-packet-engine 
+        run: cmake --preset ci
  
-      - name: Build (stub)
-        run: echo "C++ build step added Day 3"
+      - name: Build 
+        working-directory: cpp-packet-engine
+        run: cmake --build --preset ci

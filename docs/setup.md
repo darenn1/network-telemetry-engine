@@ -86,4 +86,3 @@ After `docker compose up`:
 ## Environment Variables
 
 See `scripts/.env.example` for all variables with descriptions.
-Content is filled in progressively as services are built.
