@@ -1,0 +1,83 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+
+  "configurePresets": [
+    {
+      "name":        "dev",
+      "displayName": "Dev — Debug, Ninja, compile_commands.json",
+      "description": "Local development. Debug symbols, exports compile_commands.json for clangd IDE autocomplete.",
+      "generator":   "Ninja",
+      "binaryDir":   "${sourceDir}/build/dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE":             "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+
+    {
+      "name":        "docker",
+      "displayName": "Docker — Release, Ninja",
+      "description": "Used inside the Docker container (Day 20 Dockerfile). Release build, no debug symbols, no compile_commands.json.",
+      "generator":   "Ninja",
+      "binaryDir":   "${sourceDir}/build/docker",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE":             "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF"
+      }
+    },
+
+    {
+      "name":        "ci",
+      "displayName": "CI — Release, Ninja, compile_commands.json",
+      "description": "Used in GitHub Actions (.github/workflows/ci.yml). Release build with compile_commands.json for clang-tidy linting.",
+      "generator":   "Ninja",
+      "binaryDir":   "${sourceDir}/build/ci",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE":             "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name":            "dev",
+      "displayName":     "Build dev",
+      "configurePreset": "dev"
+    },
+    {
+      "name":            "docker",
+      "displayName":     "Build docker",
+      "configurePreset": "docker"
+    },
+    {
+      "name":            "ci",
+      "displayName":     "Build ci",
+      "configurePreset": "ci"
+    }
+  ],
+
+  "testPresets": [
+    {
+      "name":            "dev",
+      "displayName":     "Test dev",
+      "configurePreset": "dev",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name":            "ci",
+      "displayName":     "Test ci",
+      "configurePreset": "ci",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
