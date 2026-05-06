@@ -8,6 +8,12 @@ project(
 )
 
 # =============================================================================
+# CTest + Testing Support
+# =============================================================================
+include(CTest)        
+enable_testing()
+
+# =============================================================================
 # C++ Standard
 # =============================================================================
 set(CMAKE_CXX_STANDARD          20)
@@ -51,7 +57,7 @@ FetchContent_Declare(
     GIT_TAG        v1.14.0
 )
 
-# FetchContent_MakeAvailable(googletest)   # <- uncomment Day 4
+FetchContent_MakeAvailable(googletest)  
 
 # =============================================================================
 # add_gtest helper macro
@@ -75,7 +81,10 @@ macro(add_gtest TARGET_NAME SOURCE_FILE)
             PRIVATE ${CMAKE_SOURCE_DIR}/include
         )
         include(GoogleTest)
-        gtest_discover_tests(${TARGET_NAME})
+        gtest_discover_tests(
+          ${TARGET_NAME}
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        )
     endif()
 endmacro()
 
@@ -165,4 +174,4 @@ target_link_libraries(packet-engine
 # =============================================================================
 # Tests subdirectory 
 # =============================================================================
-# add_subdirectory(tests)  
+add_subdirectory(tests)  

@@ -1,0 +1,22 @@
+{
+  "tests": 2,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "DummyTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "HarnessWorks",
+          "file": "\/Users\/i\/Documents\/network-telemetry-engine\/cpp-packet-engine\/tests\/test_dummy.cpp",
+          "line": 3
+        },
+        {
+          "name": "StringComparison",
+          "file": "\/Users\/i\/Documents\/network-telemetry-engine\/cpp-packet-engine\/tests\/test_dummy.cpp",
+          "line": 7
+        }
+      ]
+    }
+  ]
+}
