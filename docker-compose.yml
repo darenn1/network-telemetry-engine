@@ -23,9 +23,33 @@ services:
       retries:  5
       start_period: 15s
     restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: telemetry-mongodb
+    ports:
+      - "27017:27017"   
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE:      ${MONGO_DB}
+    volumes:
+      - ./infra/mongo/init-collections.js:/docker-entrypoint-initdb.d/init-collections.js:ro
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+      start_period: 20s
+    restart: unless-stopped
+ 
 volumes:
   rabbitmq_data:
     driver: local
+  mongodb_data:
+    driver: local
+ 
 configs:
   rabbitmq_config:
     content: |
@@ -34,3 +58,4 @@ configs:
       management.tcp.port = 15672
       log.console = true
       log.console.level = info
+ 

@@ -22,7 +22,7 @@
     {
       "name":        "docker",
       "displayName": "Docker — Release, Ninja",
-      "description": "Used inside the Docker container (Day 20 Dockerfile). Release build, no debug symbols, no compile_commands.json.",
+      "description": "Used inside the Docker container. Release build, no debug symbols, no compile_commands.json.",
       "generator":   "Ninja",
       "binaryDir":   "${sourceDir}/build/docker",
       "cacheVariables": {
