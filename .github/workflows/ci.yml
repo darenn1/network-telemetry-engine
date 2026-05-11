@@ -18,8 +18,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake ninja-build g++ \
-            libpcap-dev
-            libcap-dev libcap2-bin
+            libpcap-dev \
+            libcap-dev 
 
       - name: Configure 
         working-directory: cpp-packet-engine 
