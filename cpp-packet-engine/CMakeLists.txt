@@ -107,14 +107,23 @@ target_include_directories(utils_lib
 # )
 
 # capture — raw_socket, capture_session, packet_buffer 
-add_library(capture_lib INTERFACE)
-target_include_directories(capture_lib
-    INTERFACE ${CMAKE_SOURCE_DIR}/include
+add_library(capture_lib STATIC
+    src/capture/raw_socket.cpp       
+    # src/capture/capture_session.cpp  
 )
-# add_library(capture_lib STATIC
-#     src/capture/raw_socket.cpp       
-#     src/capture/capture_session.cpp  
-# )
+
+target_include_directories(capture_lib
+    PUBLIC ${CMAKE_SOURCE_DIR}/include
+)
+
+target_link_libraries(capture_lib
+    PUBLIC utils_lib
+)
+
+# Linux-only capability support (CAP_NET_RAW / CAP_NET_ADMIN)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(capture_lib PUBLIC cap)
+endif()
 
 # parsers — ethernet, ip, tcp, udp, icmp, arp 
 add_library(parsers_lib INTERFACE)
