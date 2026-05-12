@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "utils/ring_buffer.h"
-#include "utils/packet_buffer.h"
+#include "capture/packet_buffer.h"
 
 #include <atomic>
 #include <chrono>
