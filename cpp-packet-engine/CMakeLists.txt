@@ -63,7 +63,7 @@ endmacro()
 
 add_library(utils_lib STATIC
     src/utils/ring_buffer.cpp          
-    # src/utils/logger.cpp           
+    src/utils/logger.cpp           
     # src/utils/hex_dump.cpp         
     # src/utils/checksum.cpp         
 )
@@ -75,7 +75,7 @@ target_include_directories(utils_lib
 add_library(capture_lib STATIC
     src/capture/raw_socket.cpp       
     src/capture/packet_buffer.cpp
-    # src/capture/capture_session.cpp  
+    src/capture/capture_session.cpp  
 )
 
 target_include_directories(capture_lib
