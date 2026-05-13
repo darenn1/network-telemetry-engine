@@ -40,7 +40,7 @@ bool RingBuffer::write(const uint8_t* data, size_t size) {
         return !isFull() || stop_flag_.load(std::memory_order_relaxed);
     });
 
-    if (stop_flag_.load(std::memory_order_relaxed)) {
+    if (stop_flag_.load(std::memory_order_relaxed) && isFull()) {
         return false;
     }
 

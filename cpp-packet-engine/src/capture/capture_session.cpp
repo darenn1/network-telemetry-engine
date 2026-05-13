@@ -16,7 +16,7 @@ static constexpr int BATCH_DRAIN = 64;
 
 static constexpr int EPOLL_TIMEOUT_MS = 200;
 
-static constexpr size_t FRAME_BUF_SIZE = 2048;
+static constexpr size_t FRAME_BUF_SIZE = 2040;
 
 void captureLoop(
     int                  fd,
@@ -96,6 +96,7 @@ void captureLoop(
             }
 
             if (!packet_buf.write(frame_buf, static_cast<size_t>(bytes))) {
+                utils::log_warn("captureLoop: write() returned false — stopping");
                 goto cleanup;
             }
         }
