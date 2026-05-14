@@ -1,5 +1,6 @@
 #include "capture/capture_session.h"
 #include "utils/logger.h"
+#include "utils/hex_dump.h"
 
 #include <cerrno>
 #include <cstring>
@@ -50,6 +51,7 @@ void captureLoop(
                     ", timeout=" + std::to_string(EPOLL_TIMEOUT_MS) + "ms");
     utils::log_info("captureLoop: capture loop started");
 
+    uint64_t frame_count = 0;
     uint8_t frame_buf[FRAME_BUF_SIZE];
 
     struct epoll_event events[1];
@@ -93,6 +95,47 @@ void captureLoop(
 
             if (bytes == 0) {
                 break;
+            }
+            frame_count++;
+
+            
+            if (frame_count % 200 == 0) {
+                const uint16_t ethertype = utils::logFrameSummary(
+                    frame_buf,
+                    static_cast<size_t>(bytes),
+                    0 
+                );
+                (void)ethertype;
+            }
+
+            
+            if (static_cast<size_t>(bytes) >= 14) {
+                const uint16_t ethertype = static_cast<uint16_t>(
+                    (frame_buf[12] << 8) | frame_buf[13]
+                );
+                if (ethertype == 0x0806) {        
+                    utils::hexDump(
+                        frame_buf,
+                        static_cast<size_t>(bytes),
+                        "ARP FRAME"
+                    );
+                }
+            }
+
+            
+            if (frame_count % 1000 == 0) {
+                if (static_cast<size_t>(bytes) >= 14) {
+                    const uint16_t ethertype = static_cast<uint16_t>(
+                        (frame_buf[12] << 8) | frame_buf[13]
+                    );
+                    if (ethertype == 0x0800) {       
+                        utils::hexDump(
+                            frame_buf,
+                            static_cast<size_t>(bytes),
+                            "IPv4 SAMPLE (frame " + std::to_string(frame_count) + ")"
+                        );
+                    }
+                }
             }
 
             if (!packet_buf.write(frame_buf, static_cast<size_t>(bytes))) {

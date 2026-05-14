@@ -64,7 +64,7 @@ endmacro()
 add_library(utils_lib STATIC
     src/utils/ring_buffer.cpp          
     src/utils/logger.cpp           
-    # src/utils/hex_dump.cpp         
+    src/utils/hex_dump.cpp         
     # src/utils/checksum.cpp         
 )
 

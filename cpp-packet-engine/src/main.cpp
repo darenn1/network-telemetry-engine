@@ -73,7 +73,6 @@ int main() {
         size_t   frame_size = 0;
         uint64_t timestamp  = 0;
 
-        uint64_t count = 0;
         while (!stop_flag.load(std::memory_order_relaxed)) {
 
             if (!packet_buf.read(frame, frame_size, timestamp)) {
@@ -87,9 +86,7 @@ int main() {
             // DAY 19: flow_tracker::process(...)
             //         rabbitmq_publisher::publish(...)
             // DAY 20: all stages wired, test_full_pipeline.cpp confirms
-            count++;
-            if (count % 10 == 0)
-                utils::log_info("Thread 2: frames received: " + std::to_string(count));
+            (void)frame_size;
             (void)timestamp;
         }
 
