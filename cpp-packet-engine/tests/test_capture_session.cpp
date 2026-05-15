@@ -34,8 +34,6 @@ static void writeToPipe(int write_fd, const uint8_t* data, size_t size) {
  
 static std::vector<uint8_t> makeFrame(uint8_t fill, size_t size = 74) {
     std::vector<uint8_t> f(size, fill);
-    // Put fill byte at position 0 and size at position 1
-    // so tests can identify frames unambiguously
     f[0] = fill;
     return f;
 }
@@ -53,7 +51,8 @@ protected:
     void SetUp() override {
         stop_flag.store(false);
 #ifdef __linux__
-        ASSERT_EQ(pipe(pipefd), 0) << "pipe() failed";
+       ASSERT_EQ(socketpair(AF_UNIX, SOCK_DGRAM, 0, pipefd), 0)
+          << "socketpair() failed";
 #endif
     }
  
@@ -212,6 +211,7 @@ TEST_F(CaptureSessionTest, StopFlagHaltsCaptureLoop) {
     signalStop();
  
     auto deadline = std::chrono::steady_clock::now() + 500ms;
+    (void)deadline;
     while (!loop_exited.load() &&
            std::chrono::steady_clock::now() < deadline) {
         std::this_thread::sleep_for(10ms);
