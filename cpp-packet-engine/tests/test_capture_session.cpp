@@ -90,6 +90,7 @@ protected:
  
         auto deadline = std::chrono::steady_clock::now() +
                         std::chrono::milliseconds(timeout_ms);
+        (void)deadline;
  
         if (t.joinable()) {
             t.join();
