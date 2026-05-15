@@ -110,7 +110,7 @@ TEST_F(CaptureSessionTest, BytesLandInBufferWithCorrectTimestamp) {
 #ifndef __linux__
     GTEST_SKIP() << "AF_PACKET and pipe-based capture test is Linux-only";
 #else
-    capture::PacketBuffer packet_buf(
+    utils::PacketBuffer packet_buf(
         64, mtx, data_cv, space_cv, stop_flag
     );
  
@@ -158,7 +158,7 @@ TEST_F(CaptureSessionTest, MultipleFramesLandInFIFOOrder) {
 #ifndef __linux__
     GTEST_SKIP() << "Linux-only";
 #else
-    capture::PacketBuffer packet_buf(
+    utils::PacketBuffer packet_buf(
         64, mtx, data_cv, space_cv, stop_flag
     );
  
@@ -193,7 +193,7 @@ TEST_F(CaptureSessionTest, StopFlagHaltsCaptureLoop) {
 #ifndef __linux__
     GTEST_SKIP() << "Linux-only";
 #else
-    capture::PacketBuffer packet_buf(
+    utils::PacketBuffer packet_buf(
         64, mtx, data_cv, space_cv, stop_flag
     );
  
@@ -229,7 +229,7 @@ TEST_F(CaptureSessionTest, TimestampsAreNonDecreasing) {
 #ifndef __linux__
     GTEST_SKIP() << "Linux-only";
 #else
-    capture::PacketBuffer packet_buf(
+    utils::PacketBuffer packet_buf(
         64, mtx, data_cv, space_cv, stop_flag
     );
  
@@ -270,7 +270,7 @@ TEST_F(CaptureSessionTest, FrameSizesPreservedCorrectly) {
 #ifndef __linux__
     GTEST_SKIP() << "Linux-only";
 #else
-    capture::PacketBuffer packet_buf(
+    utils::PacketBuffer packet_buf(
         64, mtx, data_cv, space_cv, stop_flag
     );
  
