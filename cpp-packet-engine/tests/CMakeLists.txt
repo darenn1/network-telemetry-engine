@@ -7,3 +7,5 @@ add_gtest(test_ring_buffer
 add_gtest(test_capture_session
           ${CMAKE_CURRENT_SOURCE_DIR}/test_capture_session.cpp)
 
+add_gtest(test_capture_session
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_ethernet_parser.cpp)

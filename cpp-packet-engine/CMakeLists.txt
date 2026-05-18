@@ -92,18 +92,18 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 # parsers — ethernet, ip, tcp, udp, icmp, arp 
-add_library(parsers_lib INTERFACE)
+add_library(parsers_lib STATIC
+    src/parsers/ethernet_parser.cpp   
+    # src/parsers/ip_parser.cpp         
+    # src/parsers/tcp_parser.cpp        
+    # src/parsers/udp_parser.cpp        
+    # src/parsers/icmp_parser.cpp       
+    # src/parsers/arp_parser.cpp       
+)
+
 target_include_directories(parsers_lib
     INTERFACE ${CMAKE_SOURCE_DIR}/include
 )
-# add_library(parsers_lib STATIC
-#     src/parsers/ethernet_parser.cpp   
-#     src/parsers/ip_parser.cpp         
-#     src/parsers/tcp_parser.cpp        
-#     src/parsers/udp_parser.cpp        
-#     src/parsers/icmp_parser.cpp       
-#     src/parsers/arp_parser.cpp       
-# )
 
 # pipeline — filter, dissector, stats, flow_tracker 
 add_library(pipeline_lib INTERFACE)
