@@ -65,7 +65,7 @@ add_library(utils_lib STATIC
     src/utils/ring_buffer.cpp          
     src/utils/logger.cpp           
     src/utils/hex_dump.cpp         
-    # src/utils/checksum.cpp         
+    src/utils/checksum.cpp         
 )
 
 target_include_directories(utils_lib
@@ -94,7 +94,7 @@ endif()
 # parsers — ethernet, ip, tcp, udp, icmp, arp 
 add_library(parsers_lib STATIC
     src/parsers/ethernet_parser.cpp   
-    # src/parsers/ip_parser.cpp         
+    src/parsers/ip_parser.cpp         
     # src/parsers/tcp_parser.cpp        
     # src/parsers/udp_parser.cpp        
     # src/parsers/icmp_parser.cpp       
@@ -104,6 +104,7 @@ add_library(parsers_lib STATIC
 target_include_directories(parsers_lib
     INTERFACE ${CMAKE_SOURCE_DIR}/include
 )
+target_link_libraries(parsers_lib PUBLIC utils_lib)
 
 # pipeline — filter, dissector, stats, flow_tracker 
 add_library(pipeline_lib INTERFACE)

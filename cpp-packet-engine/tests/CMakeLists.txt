@@ -9,3 +9,9 @@ add_gtest(test_capture_session
 
 add_gtest(test_ethernet_parser
           ${CMAKE_CURRENT_SOURCE_DIR}/test_ethernet_parser.cpp)
+
+add_gtest(test_ip_parser
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_ip_parser.cpp)
+
+add_gtest(test_checksum
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_checksum.cpp)

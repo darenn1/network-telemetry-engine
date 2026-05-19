@@ -45,7 +45,7 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 cp scripts/.env.example .env
 
 # 2. Start RabbitMQ + MongoDB
-docker compose up rabbitmq mongo
+docker compose up rabbitmq mongodb
 
 # 3. Confirm RabbitMQ management UI
 # http://localhost:15672  (guest / guest)
