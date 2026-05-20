@@ -87,6 +87,5 @@ TEST(VerifyChecksumTest, BadChecksumReturnsFalse) {
 }
 
 TEST(VerifyChecksumTest, ZeroedChecksumReturnsFalse) {
-    // A header with the checksum field zeroed is invalid.
     EXPECT_FALSE(utils::verifyIpChecksum(kZeroedChecksumHeader, 20));
 }

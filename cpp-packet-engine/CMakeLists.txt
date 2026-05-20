@@ -95,8 +95,8 @@ endif()
 add_library(parsers_lib STATIC
     src/parsers/ethernet_parser.cpp   
     src/parsers/ip_parser.cpp         
-    # src/parsers/tcp_parser.cpp        
-    # src/parsers/udp_parser.cpp        
+    src/parsers/tcp_parser.cpp        
+    src/parsers/udp_parser.cpp        
     # src/parsers/icmp_parser.cpp       
     # src/parsers/arp_parser.cpp       
 )

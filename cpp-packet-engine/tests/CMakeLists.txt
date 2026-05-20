@@ -15,3 +15,9 @@ add_gtest(test_ip_parser
 
 add_gtest(test_checksum
           ${CMAKE_CURRENT_SOURCE_DIR}/test_checksum.cpp)
+
+add_gtest(test_tcp_parser
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_tcp_parser.cpp)
+
+add_gtest(test_udp_parser
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_udp_parser.cpp)
