@@ -9,7 +9,7 @@
 namespace parsers {
 
 static constexpr size_t ETHERNET_HEADER_SIZE = 14;
-static constexpr size_t ETHERNET_MIN_SIZE    = 14;
+static constexpr size_t ETHERNET_MIN_SIZE    = 15;
 
 static constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
 static constexpr uint16_t ETHERTYPE_ARP  = 0x0806;

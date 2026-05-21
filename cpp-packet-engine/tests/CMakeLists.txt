@@ -27,3 +27,6 @@ add_gtest(test_icmp_parser
 
 add_gtest(test_arp_parser
           ${CMAKE_CURRENT_SOURCE_DIR}/test_arp_parser.cpp)
+
+add_gtest(test_parsers_integration
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_parsers_integration.cpp)
