@@ -137,63 +137,63 @@ std::unordered_set<uint32_t> getLocalIps() {
 
     int probe_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (probe_fd < 0) {
-        utils::log_warn("getLocalIps: failed to open probe socket: {}",
-                        strerror(errno));
+        utils::log_warn("getLocalIps: failed to open probe socket: " +
+                        std::string(strerror(errno)));
         return result;
     }
 
-    std::vector<char> buf(sizeof(struct ifreq) * 16); 
- 
+    std::vector<char> buf(sizeof(struct ifreq) * 16);
+
     struct ifconf ifc{};
     for (;;) {
         ifc.ifc_len = static_cast<int>(buf.size());
         ifc.ifc_buf = buf.data();
- 
-        if (ioctl(fd, SIOCGIFCONF, &ifc) < 0) {
-            utils::log_warn("getLocalIps: SIOCGIFCONF failed");
-            return result; // empty
+
+        if (ioctl(probe_fd, SIOCGIFCONF, &ifc) < 0) {
+            utils::log_warn("getLocalIps: SIOCGIFCONF failed: " +
+                            std::string(strerror(errno)));
+            close(probe_fd);
+            return result;
         }
- 
+
         if (static_cast<std::size_t>(ifc.ifc_len) < buf.size())
             break;
- 
+
         buf.resize(buf.size() * 2);
     }
- 
- 
-    const std::size_t n = static_cast<std::size_t>(ifc.ifc_len) / sizeof(struct ifreq);
+
+    const std::size_t   n      = static_cast<std::size_t>(ifc.ifc_len)
+                                 / sizeof(struct ifreq);
     const struct ifreq* ifaces = reinterpret_cast<const struct ifreq*>(buf.data());
- 
+
     for (std::size_t i = 0; i < n; ++i) {
         struct ifreq ifr{};
         std::strncpy(ifr.ifr_name, ifaces[i].ifr_name, IFNAMSIZ - 1);
- 
-        if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
+
+        if (ioctl(probe_fd, SIOCGIFADDR, &ifr) < 0)
             continue;
-        }
- 
+
         if (ifr.ifr_addr.sa_family != AF_INET)
             continue;
- 
-        const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&ifr.ifr_addr);
-        uint32_t addr = sin->sin_addr.s_addr;
 
-        addr = ntohl(addr);
- 
+        const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&ifr.ifr_addr);
+        const uint32_t addr = ntohl(sin->sin_addr.s_addr);
+
         if (addr == INADDR_ANY)
             continue;
- 
+
         result.insert(addr);
- 
+
         char dotted[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &sin->sin_addr, dotted, sizeof(dotted));
-        utils::log_info("Local IP detected: {} on interface {}", dotted, ifr.ifr_name);
+        utils::log_info("Local IP detected: " + std::string(dotted) +
+                        " on interface " + ifr.ifr_name);
     }
- 
-    close(probe_fd);                                   
 
-    utils::log_info("[raw_socket] {} local IPv4 address(es) found",
-                    result.size());
+    close(probe_fd);
+
+    utils::log_info("[raw_socket] " + std::to_string(result.size()) +
+                    " local IPv4 address(es) found");
     return result;
 }
 
