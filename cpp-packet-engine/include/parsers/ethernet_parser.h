@@ -4,17 +4,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include "parsers/types.h"
 
 namespace parsers {
 
 static constexpr size_t ETHERNET_HEADER_SIZE = 14;
-static constexpr size_t ETHERNET_MIN_SIZE    = 15;
+static constexpr size_t ETHERNET_MIN_SIZE    = 14;
 
 static constexpr uint16_t ETHERTYPE_IPV4 = 0x0800;
 static constexpr uint16_t ETHERTYPE_ARP  = 0x0806;
 static constexpr uint16_t ETHERTYPE_IPV6 = 0x86DD;
-
-using MACAddress = std::array<uint8_t, 6>;
 
 
 struct EthernetFrame {
