@@ -2,6 +2,8 @@
 #include "capture/raw_socket.h"
 #include "capture/packet_buffer.h"
 #include "capture/capture_session.h"
+#include "pipeline/filter_stage.h"
+#include "pipeline/dissector_stage.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -69,25 +71,30 @@ int main() {
     std::thread t2([&] {
         utils::log_info("Thread 2: pipeline loop started (stub — Day 8)");
 
-        uint8_t  frame[2048];
-        size_t   frame_size = 0;
-        uint64_t timestamp  = 0;
+        static uint8_t frame_buf[2040];
+
+        pipeline::LocalIpSet local_ips = capture::getLocalIps();
 
         while (!stop_flag.load(std::memory_order_relaxed)) {
 
-            if (!packet_buf.read(frame, frame_size, timestamp)) {
-                break;  // stop_flag fired
-            }
+          auto filtered = pipeline::filter_stage(
+            packet_buf, frame_buf, sizeof(frame_buf)
+          );
 
-            // DAY 8:  frame discarded — pipeline not built yet
-            // DAY 16: filter_stage::process(frame, frame_size)
-            // DAY 17: dissector_stage::process(frame, frame_size, timestamp)
-            // DAY 18: stats_stage::process(frame, frame_size, timestamp)
-            // DAY 19: flow_tracker::process(...)
-            //         rabbitmq_publisher::publish(...)
-            // DAY 20: all stages wired, test_full_pipeline.cpp confirms
-            (void)frame_size;
-            (void)timestamp;
+
+
+          if (!filtered.has_value()) {
+              break;   // stop_flag fired inside read()
+          }
+
+          auto dissected = pipeline::dissector_stage(*filtered, local_ips);
+          if (!dissected.has_value()) {
+              continue;  // malformed L3 frame — logged, get next
+          }
+
+          // Day 18: stats_stage
+          // Day 19: flow_tracker + rabbitmq_publisher
+          (void)dissected;
         }
 
         utils::log_info("Thread 2: pipeline loop stopped");

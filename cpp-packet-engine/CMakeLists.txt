@@ -107,16 +107,17 @@ target_include_directories(parsers_lib
 target_link_libraries(parsers_lib PUBLIC utils_lib)
 
 # pipeline — filter, dissector, stats, flow_tracker 
-add_library(pipeline_lib INTERFACE)
+add_library(pipeline_lib STATIC
+    src/pipeline/filter_stage.cpp     
+    src/pipeline/dissector_stage.cpp  
+    # src/pipeline/stats_stage.cpp      
+    # src/pipeline/flow_tracker.cpp    
+)
 target_include_directories(pipeline_lib
     INTERFACE ${CMAKE_SOURCE_DIR}/include
 )
-# add_library(pipeline_lib STATIC
-#     src/pipeline/filter_stage.cpp     
-#     src/pipeline/dissector_stage.cpp  
-#     src/pipeline/stats_stage.cpp      
-#     src/pipeline/flow_tracker.cpp    
-# )
+
+target_link_libraries(pipeline_lib PUBLIC utils_lib parsers_lib)
 
 # publishers — rabbitmq_publisher 
 add_library(publishers_lib INTERFACE)

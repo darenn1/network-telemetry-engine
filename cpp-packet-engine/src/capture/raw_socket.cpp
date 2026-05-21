@@ -1,9 +1,11 @@
 #include "capture/raw_socket.h"
+#include "utils/logger.h"
 
 #include <cerrno>
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -15,7 +17,6 @@
 #include <unistd.h>
 
 // Linux capability headers
-// Requires: libcap-dev (installed in Dockerfile Day 6)
 #include <sys/capability.h>
 #include <sys/prctl.h>
 
@@ -129,6 +130,71 @@ void closeRawSocket(int fd) {
         close(fd);
         std::cout << "[raw_socket] Socket closed\n";
     }
+}
+
+std::unordered_set<uint32_t> getLocalIps() {
+    std::unordered_set<uint32_t> result;
+
+    int probe_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (probe_fd < 0) {
+        utils::log_warn("getLocalIps: failed to open probe socket: {}",
+                        strerror(errno));
+        return result;
+    }
+
+    std::vector<char> buf(sizeof(struct ifreq) * 16); 
+ 
+    struct ifconf ifc{};
+    for (;;) {
+        ifc.ifc_len = static_cast<int>(buf.size());
+        ifc.ifc_buf = buf.data();
+ 
+        if (ioctl(fd, SIOCGIFCONF, &ifc) < 0) {
+            utils::log_warn("getLocalIps: SIOCGIFCONF failed");
+            return result; // empty
+        }
+ 
+        if (static_cast<std::size_t>(ifc.ifc_len) < buf.size())
+            break;
+ 
+        buf.resize(buf.size() * 2);
+    }
+ 
+ 
+    const std::size_t n = static_cast<std::size_t>(ifc.ifc_len) / sizeof(struct ifreq);
+    const struct ifreq* ifaces = reinterpret_cast<const struct ifreq*>(buf.data());
+ 
+    for (std::size_t i = 0; i < n; ++i) {
+        struct ifreq ifr{};
+        std::strncpy(ifr.ifr_name, ifaces[i].ifr_name, IFNAMSIZ - 1);
+ 
+        if (ioctl(fd, SIOCGIFADDR, &ifr) < 0) {
+            continue;
+        }
+ 
+        if (ifr.ifr_addr.sa_family != AF_INET)
+            continue;
+ 
+        const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&ifr.ifr_addr);
+        uint32_t addr = sin->sin_addr.s_addr;
+
+        addr = ntohl(addr);
+ 
+        if (addr == INADDR_ANY)
+            continue;
+ 
+        result.insert(addr);
+ 
+        char dotted[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &sin->sin_addr, dotted, sizeof(dotted));
+        utils::log_info("Local IP detected: {} on interface {}", dotted, ifr.ifr_name);
+    }
+ 
+    close(probe_fd);                                   
+
+    utils::log_info("[raw_socket] {} local IPv4 address(es) found",
+                    result.size());
+    return result;
 }
 
 } 
