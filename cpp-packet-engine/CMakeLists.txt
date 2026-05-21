@@ -97,8 +97,8 @@ add_library(parsers_lib STATIC
     src/parsers/ip_parser.cpp         
     src/parsers/tcp_parser.cpp        
     src/parsers/udp_parser.cpp        
-    # src/parsers/icmp_parser.cpp       
-    # src/parsers/arp_parser.cpp       
+    src/parsers/icmp_parser.cpp       
+    src/parsers/arp_parser.cpp       
 )
 
 target_include_directories(parsers_lib

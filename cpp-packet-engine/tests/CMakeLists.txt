@@ -21,3 +21,9 @@ add_gtest(test_tcp_parser
 
 add_gtest(test_udp_parser
           ${CMAKE_CURRENT_SOURCE_DIR}/test_udp_parser.cpp)
+
+add_gtest(test_icmp_parser
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_icmp_parser.cpp)
+
+add_gtest(test_arp_parser
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_arp_parser.cpp)
