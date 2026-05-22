@@ -1,4 +1,4 @@
-#include "pipeline/rabbitmq_publisher.h"
+#include "publisher/rabbitmq_publisher.h"
 #include "utils/logger.h"
 #include <arpa/inet.h>
 #include <cstdlib>
@@ -204,7 +204,7 @@ bool RabbitMqPublisher::publish(
     {
         return true;  // intentional skip, not a failure
     }
-    
+
     if (!connected_) {
         utils::log_warn("rabbitmq_publisher: attempting reconnect...");
         connected_ = connect();
