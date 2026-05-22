@@ -8,9 +8,6 @@
 
 namespace pipeline {
 
-// ---------------------------------------------------------------------------
-// Config from environment
-// ---------------------------------------------------------------------------
 PublisherConfig publisherConfigFromEnv() {
     PublisherConfig cfg;
     if (const char* v = std::getenv("RABBITMQ_HOST"))        cfg.host        = v;
@@ -22,9 +19,6 @@ PublisherConfig publisherConfigFromEnv() {
     return cfg;
 }
 
-// ---------------------------------------------------------------------------
-// Helper functions
-// ---------------------------------------------------------------------------
 static std::string ipToStr(uint32_t ip_host) {
     uint32_t ip_net = htonl(ip_host);
     char buf[INET_ADDRSTRLEN];
@@ -60,9 +54,6 @@ static std::string protocolToStr(uint8_t proto) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// JSON builder
-// ---------------------------------------------------------------------------
 std::string RabbitMqPublisher::buildJson(
     const EnrichedFrame& f,
     const FlowRecord&    flow,
@@ -70,11 +61,9 @@ std::string RabbitMqPublisher::buildJson(
 {
     std::ostringstream j;
     j << "{"
-      // ── Core identifiers ─────────────────────────────────────────────
       << "\"flow_key\":"       << "\"" << f.flow_key << "\","
       << "\"timestamp\":"      << f.timestamp << ","
 
-      // ── Network layer ────────────────────────────────────────────────
       << "\"src_ip\":"         << "\"" << ipToStr(f.src_ip) << "\","
       << "\"dst_ip\":"         << "\"" << ipToStr(f.dst_ip) << "\","
       << "\"protocol\":"       << "\"" << protocolToStr(f.protocol) << "\","
@@ -85,26 +74,21 @@ std::string RabbitMqPublisher::buildJson(
       << "\"dst_mac\":"        << "\"" << macToStr(f.dst_mac) << "\","
       << "\"checksum_valid\":" << (f.checksum_valid ? "true" : "false") << ","
 
-      // ── Transport ────────────────────────────────────────────────────
       << "\"src_port\":"       << f.src_port << ","
       << "\"dst_port\":"       << f.dst_port << ","
 
-      // ── TCP fields ───────────────────────────────────────────────────
       << "\"flags\":"          << static_cast<int>(f.flags) << ","
       << "\"seq_num\":"        << f.seq_num << ","
       << "\"is_retransmit\":"  << (is_retransmit ? "true" : "false") << ","
 
-      // ── ICMP fields ──────────────────────────────────────────────────
       << "\"icmp_type\":"      << static_cast<int>(f.icmp_type) << ","
       << "\"icmp_code\":"      << static_cast<int>(f.icmp_code) << ","
 
-      // ── ARP fields ───────────────────────────────────────────────────
       << "\"arp_opcode\":"     << f.arp_opcode << ","
       << "\"arp_sender_ip\":"  << "\"" << ipToStr(f.arp_sender_ip) << "\","
       << "\"arp_sender_mac\":" << "\"" << macToStr(f.arp_sender_mac) << "\","
       << "\"arp_target_ip\":"  << "\"" << ipToStr(f.arp_target_ip) << "\","
 
-      // ── Flow aggregated state ────────────────────────────────────────
       << "\"first_seen\":"     << flow.first_seen_ms << ","
       << "\"last_seen\":"      << flow.last_seen_ms << ","
       << "\"total_bytes\":"    << flow.total_bytes << ","
@@ -118,9 +102,6 @@ std::string RabbitMqPublisher::buildJson(
     return j.str();
 }
 
-// ---------------------------------------------------------------------------
-// Connection management
-// ---------------------------------------------------------------------------
 bool RabbitMqPublisher::connect() {
     if (conn_) disconnect();
 
@@ -176,9 +157,6 @@ void RabbitMqPublisher::disconnect() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Constructor / Destructor
-// ---------------------------------------------------------------------------
 RabbitMqPublisher::RabbitMqPublisher(const PublisherConfig& config)
     : config_(config), connected_(false)
 {
@@ -189,9 +167,6 @@ RabbitMqPublisher::~RabbitMqPublisher() {
     disconnect();
 }
 
-// ---------------------------------------------------------------------------
-// publish — with reconnect logic
-// ---------------------------------------------------------------------------
 bool RabbitMqPublisher::publish(
     const EnrichedFrame& frame,
     const FlowRecord&    flow,
@@ -202,7 +177,7 @@ bool RabbitMqPublisher::publish(
         frame.protocol != 17 &&   // UDP
         frame.protocol != 0)      // ARP
     {
-        return true;  // intentional skip, not a failure
+        return true;  
     }
 
     if (!connected_) {

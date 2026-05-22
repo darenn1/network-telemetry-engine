@@ -12,9 +12,8 @@ std::optional<FilteredFrame> filter_stage(
     size_t   frame_size = 0;
     uint64_t capture_ts_ms = 0;
 
-    // Read frame (PacketBuffer already extracted timestamp)
     if (!packet_buf.read(frame_buf, frame_size, capture_ts_ms)) {
-        return std::nullopt;  // stop_flag was set
+        return std::nullopt; 
     }
 
     if (frame_size < parsers::ETHERNET_MIN_SIZE) {
@@ -28,7 +27,6 @@ std::optional<FilteredFrame> filter_stage(
         return std::nullopt;
     }
 
-    // Parse Ethernet header
     auto eth = parsers::ethernet_parser::parse(frame_buf, frame_size);
 
     if (!eth.valid) {
@@ -41,10 +39,9 @@ std::optional<FilteredFrame> filter_stage(
         return std::nullopt;
     }
 
-    // Only allow IPv4 and ARP to continue in the pipeline
     if (eth.ethertype != parsers::ETHERTYPE_IPV4 &&
         eth.ethertype != parsers::ETHERTYPE_ARP) {
-        return std::nullopt;   // silent drop for IPv6, VLAN, etc.
+        return std::nullopt;   
     }
 
     return FilteredFrame{
@@ -52,4 +49,4 @@ std::optional<FilteredFrame> filter_stage(
         .capture_ts_ms = capture_ts_ms
     };
   }
-}// namespace pipeline
+}

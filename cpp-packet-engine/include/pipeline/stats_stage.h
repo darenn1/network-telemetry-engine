@@ -28,18 +28,18 @@ struct EnrichedFrame {
 
     uint32_t arp_sender_ip = 0;
     parsers::MACAddress arp_sender_mac = {};
-    uint32_t arp_target_ip = 0;      // ← NEW
-    uint16_t arp_opcode = 0;         // ← NEW (1=request, 2=reply)
+    uint32_t arp_target_ip = 0;     
+    uint16_t arp_opcode = 0;    
 
-    uint8_t icmp_type = 0;           // ← NEW
+    uint8_t icmp_type = 0;          
     uint8_t icmp_code = 0;
 
-    uint8_t  ttl = 0;                // ← NEW
-    parsers::MACAddress src_mac = {};   // ← NEW
-    parsers::MACAddress dst_mac = {};   // ← NEW
-    bool     checksum_valid = true;  // ← NEW (default true)
+    uint8_t  ttl = 0;       
+    parsers::MACAddress src_mac = {};  
+    parsers::MACAddress dst_mac = {};   
+    bool     checksum_valid = true;  
 
-    bool     is_retransmit = false;  // ← NEW (set by flow_tracker)
+    bool     is_retransmit = false;  
 
     std::string flow_key;
 };

@@ -4,6 +4,9 @@
 #include "capture/capture_session.h"
 #include "pipeline/filter_stage.h"
 #include "pipeline/dissector_stage.h"
+#include "pipeline/stats_stage.h"    
+#include "pipeline/flow_tracker.h"      
+#include "publisher/rabbitmq_publisher.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -57,6 +60,19 @@ int main() {
 
     utils::log_info("Packet buffer initialized");
 
+    // ── Flow table — shared state across pipeline iterations ─────────────
+    pipeline::FlowTable flow_table;
+ 
+    // ── RabbitMQ publisher ────────────────────────────────────────────────
+    pipeline::PublisherConfig pub_cfg = pipeline::publisherConfigFromEnv();
+    pipeline::RabbitMqPublisher publisher(pub_cfg);
+ 
+    if (!publisher.isConnected()) {
+        utils::log_error("Failed to connect to RabbitMQ — exiting");
+        capture::closeRawSocket(fd);
+        return 1;
+    }
+
     utils::log_info("Spawning Thread 1 — capture");
 
     std::thread t1([&] {
@@ -66,10 +82,10 @@ int main() {
     utils::log_info("Thread 1 started — capturing on socket fd " +
                     std::to_string(fd));
 
-    utils::log_info("Spawning Thread 2 — pipeline (stub)");
+    utils::log_info("Spawning Thread 2 — pipeline");
 
     std::thread t2([&] {
-        utils::log_info("Thread 2: pipeline loop started (stub — Day 8)");
+        utils::log_info("Thread 2: pipeline loop started");
 
         static uint8_t frame_buf[2040];
 
@@ -92,9 +108,13 @@ int main() {
               continue;  // malformed L3 frame — logged, get next
           }
 
-          // Day 18: stats_stage
-          // Day 19: flow_tracker + rabbitmq_publisher
-          (void)dissected;
+          auto enriched = pipeline::stats_stage(*dissected);                 
+          if (!enriched.has_value()) continue;                               
+
+          bool is_retransmit = false;
+          auto flow = pipeline::flow_tracker(*enriched, flow_table, is_retransmit);
+ 
+          publisher.publish(*enriched, flow, is_retransmit);
         }
 
         utils::log_info("Thread 2: pipeline loop stopped");

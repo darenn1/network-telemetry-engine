@@ -13,7 +13,7 @@ struct FilteredFrame {
 
 std::optional<FilteredFrame> filter_stage(
     utils::PacketBuffer& packet_buf,
-    uint8_t*             frame_buf,     // caller-owned, reused buffer
+    uint8_t*             frame_buf,    
     size_t               buf_capacity
 );
 
