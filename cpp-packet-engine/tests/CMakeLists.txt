@@ -30,3 +30,6 @@ add_gtest(test_arp_parser
 
 add_gtest(test_parsers_integration
           ${CMAKE_CURRENT_SOURCE_DIR}/test_parsers_integration.cpp)
+
+add_gtest(test_full_pipeline
+          ${CMAKE_CURRENT_SOURCE_DIR}/test_full_pipeline.cpp)

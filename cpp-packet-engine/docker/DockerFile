@@ -1,25 +1,19 @@
 FROM ubuntu:24.04
 
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ---------------------------------------------------------------------------
-# System dependencies
+# System dependencies — single layer to minimise image size
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake \
     ninja-build \
     g++ \
-    libpcap-dev \
     libcap-dev \
+    libpcap-dev \
     libcap2-bin \
+    librabbitmq-dev \
     && rm -rf /var/lib/apt/lists/*
-
-
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     librabbitmq-dev \
-#     && rm -rf /var/lib/apt/lists/*
-
 
 WORKDIR /app
 
@@ -29,9 +23,8 @@ RUN cmake --preset docker && \
     cmake --build --preset docker
 
 # ---------------------------------------------------------------------------
-# Entrypoint — added Day 20 when full pipeline is wired
+# Entrypoint — binary is absolute path; CMD is empty so docker-compose
+# can pass env vars via 'environment:' without overriding the binary.
 # ---------------------------------------------------------------------------
-# ENTRYPOINT ["./build/docker/packet-engine"]
-
-
-CMD ["./build/docker/packet-engine"]
+ENTRYPOINT ["/app/build/docker/packet-engine"]
+CMD []

@@ -43,6 +43,28 @@ services:
       retries:  5
       start_period: 20s
     restart: unless-stopped
+
+  packet-engine:
+    build:
+      context: ./cpp-packet-engine
+      dockerfile: docker/Dockerfile
+    container_name: telemetry-packet-engine
+    network_mode: host
+    cap_add:
+      - NET_RAW     
+      - NET_ADMIN  
+    environment:
+      CAPTURE_INTERFACE:    ${CAPTURE_INTERFACE:-eth0}
+      RABBITMQ_HOST:        ${RABBITMQ_HOST:-localhost}
+      RABBITMQ_PORT:        ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER:        ${RABBITMQ_USER}
+      RABBITMQ_PASS:        ${RABBITMQ_PASS}
+      RABBITMQ_EXCHANGE:    ${RABBITMQ_EXCHANGE:-raw_packets}
+      RING_BUFFER_CAPACITY: ${RING_BUFFER_CAPACITY:-1024}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy  
+    restart: unless-stopped
  
 volumes:
   rabbitmq_data:
