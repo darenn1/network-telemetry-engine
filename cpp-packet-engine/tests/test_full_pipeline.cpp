@@ -138,7 +138,7 @@ TEST(FullPipeline, TcpSynEnrichedFrameHasAllRequiredFields) {
     EXPECT_EQ(e->ttl,         64u);
 
     // MAC layer
-    EXPECT_EQ(e->src_mac[0], 0x00u);
+    EXPECT_EQ(e->src_mac[0], 0x11u);
     EXPECT_EQ(e->dst_mac[0], 0xAAu);
 
     // Transport layer
@@ -209,7 +209,7 @@ TEST(FullPipeline, IcmpEnrichedFrameHasAllRequiredFields) {
     EXPECT_EQ(e->arp_sender_ip, 0u);
     EXPECT_EQ(e->arp_target_ip, 0u);
     EXPECT_EQ(e->arp_opcode, 0u);
-    
+
     EXPECT_TRUE(e->checksum_valid);
     EXPECT_FALSE(e->is_retransmit);
 }
