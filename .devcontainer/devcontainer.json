@@ -1,0 +1,9 @@
+{
+  "name": "network-telemetry-engine",
+  "forwardPorts": [5672, 15672, 27017],
+  "portsAttributes": {
+    "5672":  { "label": "RabbitMQ AMQP" },
+    "15672": { "label": "RabbitMQ UI",  "onAutoForward": "openBrowser" },
+    "27017": { "label": "MongoDB" }
+  }
+}

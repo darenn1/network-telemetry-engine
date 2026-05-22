@@ -47,7 +47,7 @@ services:
   packet-engine:
     build:
       context: ./cpp-packet-engine
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/DockerFile
     container_name: telemetry-packet-engine
     network_mode: host
     cap_add:
