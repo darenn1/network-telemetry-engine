@@ -31,6 +31,8 @@ db.createCollection("traffic_flows", {
                 first_seen:    { bsonType: ["long", "null"] },
                 last_seen:     { bsonType: ["long", "null"] },
                 total_bytes:   { bsonType: ["long", "null"] },
+                inbound_bytes:  { bsonType: ["long", "null"] },
+                outbound_bytes: { bsonType: ["long", "null"] },
                 syn_count:     { bsonType: ["int", "null"] },
                 syn_ack_count: { bsonType: ["int", "null"] },
                 rst_count:     { bsonType: ["int", "null"] },

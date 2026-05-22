@@ -27,6 +27,9 @@ add_compile_options(
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(RABBITMQ REQUIRED librabbitmq)
+
 include(FetchContent)
 
 FetchContent_Declare(
@@ -110,8 +113,8 @@ target_link_libraries(parsers_lib PUBLIC utils_lib)
 add_library(pipeline_lib STATIC
     src/pipeline/filter_stage.cpp     
     src/pipeline/dissector_stage.cpp  
-    # src/pipeline/stats_stage.cpp      
-    # src/pipeline/flow_tracker.cpp    
+    src/pipeline/stats_stage.cpp      
+    src/pipeline/flow_tracker.cpp    
 )
 target_include_directories(pipeline_lib
     INTERFACE ${CMAKE_SOURCE_DIR}/include
@@ -120,13 +123,20 @@ target_include_directories(pipeline_lib
 target_link_libraries(pipeline_lib PUBLIC utils_lib parsers_lib)
 
 # publishers — rabbitmq_publisher 
-add_library(publishers_lib INTERFACE)
+add_library(publishers_lib STATIC
+    src/publishers/rabbitmq_publisher.cpp   
+)
 target_include_directories(publishers_lib
     INTERFACE ${CMAKE_SOURCE_DIR}/include
+    ${RABBITMQ_INCLUDE_DIRS}
 )
-# add_library(publishers_lib STATIC
-#     src/publishers/rabbitmq_publisher.cpp   
-# )
+
+target_link_libraries(publishers_lib
+    PUBLIC
+        utils_lib
+        pipeline_lib
+        ${RABBITMQ_LIBRARIES}
+)
 
 add_executable(packet-engine
     src/main.cpp
