@@ -44,14 +44,27 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 # 1. Copy env template to project root
 cp scripts/.env.example .env
 
-# 2. Start RabbitMQ + MongoDB
-docker compose up rabbitmq mongodb
+# 2. Once — after clone or major dependency changes
+docker compose build
 
-# 3. Confirm RabbitMQ management UI
-# http://localhost:15672  (guest / guest)
+# 3. Every start
+docker compose up -d
 
-# 4. Start all services
-docker compose up
+# 4. Check everything running
+docker compose ps
+
+# 5. Watch logs
+docker compose logs -f
+
+# 6. Verify frames in RabbitMQ
+curl -s -u guest:guest http://localhost:15672/api/queues/%2F/raw_packets.spring \
+  | python3 -m json.tool | grep messages
+
+# 7. Stop cleanly
+docker compose down
+
+# 8. Stop and remove volumes (full reset)
+docker compose down -v
 ```
 
 ### CMake Presets (C++ local development)
