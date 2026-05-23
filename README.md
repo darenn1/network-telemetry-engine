@@ -38,6 +38,15 @@ See [docs/setup.md](docs/setup.md) for full setup instructions.
 | CMake | 3.25 | C++ build system (local dev only) |
 | Ninja | 1.11 | C++ build backend (local dev only) |
 
+**C++ local development also requires these system libraries (Debian/Ubuntu):**
+```bash
+sudo apt-get install -y \
+  libcap-dev \
+  librabbitmq-dev \
+  pkg-config
+```
+
+
 ### Quick Start
 
 ```bash
@@ -74,14 +83,17 @@ cd cpp-packet-engine
 
 # dev — Debug, Ninja, exports compile_commands.json for clangd
 cmake --preset dev
-cmake --build build/dev
-ctest --test-dir build/dev --output-on-failure
+cmake --build --preset dev
+ctest --preset dev
 
 # docker — Release, used inside container
 cmake --preset docker
+cmake --build --preset docker
 
 # ci — Release + compile_commands.json, used in GitHub Actions
 cmake --preset ci
+cmake --build --preset ci
+ctest --preset ci
 ```
 
 ### Useful Scripts
