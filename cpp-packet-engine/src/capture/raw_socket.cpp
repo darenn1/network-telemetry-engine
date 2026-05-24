@@ -138,7 +138,7 @@ void closeRawSocket(int fd) {
  
     if (g_socket_state.iface[0] != '\0') {
         struct ifreq ifr{};
-        std::strncpy(ifr.ifr_name, g_socket_state.iface, IFNAMSIZ - 1);
+        std::memcpy(ifr.ifr_name, g_socket_state.iface, IFNAMSIZ - 1);
         ifr.ifr_name[IFNAMSIZ - 1] = '\0';
         ifr.ifr_flags = g_socket_state.orig_flags;
  
