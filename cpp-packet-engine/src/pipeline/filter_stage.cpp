@@ -12,7 +12,7 @@ std::optional<FilteredFrame> filter_stage(
     size_t   frame_size = 0;
     uint64_t capture_ts_ms = 0;
 
-    if (!packet_buf.read(frame_buf, frame_size, capture_ts_ms)) {
+    if (!packet_buf.read(frame_buf, buf_capacity, frame_size, capture_ts_ms)) {
         return std::nullopt; 
     }
 

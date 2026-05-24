@@ -1,4 +1,5 @@
 #include "capture/packet_buffer.h"
+#include "utils/logger.h"
 
 #include <chrono>
 #include <cstring>
@@ -43,6 +44,7 @@ bool PacketBuffer::write(const uint8_t* frame_data, size_t frame_size) {
 
 bool PacketBuffer::read(
     uint8_t*  out_data,
+    size_t    out_capacity,
     size_t&   out_size,
     uint64_t& out_timestamp
 ) {
@@ -52,11 +54,24 @@ bool PacketBuffer::read(
         return false;   
     }
 
-    std::memcpy(&out_timestamp, slot_buf_, TIMESTAMP_SIZE);
+    if (slot_size < TIMESTAMP_SIZE) {
+        utils::log_error("packet_buffer: slot_size < TIMESTAMP_SIZE — "
+                         "memory corruption or constant mismatch");
+        return false;
+    }
 
     out_size = slot_size - TIMESTAMP_SIZE;
-    std::memcpy(out_data, slot_buf_ + TIMESTAMP_SIZE, out_size);
 
+    if (out_size > out_capacity) {
+        utils::log_error("packet_buffer: frame size " +
+                         std::to_string(out_size) +
+                         " exceeds buffer capacity " +
+                         std::to_string(out_capacity));
+        return false;
+    }
+
+    std::memcpy(&out_timestamp, slot_buf_, TIMESTAMP_SIZE);
+    std::memcpy(out_data, slot_buf_ + TIMESTAMP_SIZE, out_size);
     return true;
 }
 

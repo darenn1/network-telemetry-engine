@@ -284,7 +284,7 @@ TEST_F(PacketBufferTest, TimestampAttachedAtWriteTime) {
     size_t   out_size    = 0;
     uint64_t out_ts      = 0;
 
-    EXPECT_TRUE(pb.read(out, out_size, out_ts));
+    EXPECT_TRUE(pb.read(out, sizeof(out), out_size, out_ts));
 
     auto after = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()
@@ -317,7 +317,7 @@ TEST_F(PacketBufferTest, TimestampsAscending) {
         size_t   out_size = 0;
         uint64_t ts       = 0;
 
-        EXPECT_TRUE(pb.read(out, out_size, ts));
+        EXPECT_TRUE(pb.read(out, sizeof(out), out_size, ts));
         EXPECT_GE(ts, prev_ts)
             << "Timestamp at index " << i << " is less than previous";
         prev_ts = ts;
@@ -335,7 +335,7 @@ TEST_F(PacketBufferTest, TimestampNonZero) {
     size_t   out_size = 0;
     uint64_t ts       = 0;
 
-    pb.read(out, out_size, ts);
+    pb.read(out, sizeof(out), out_size, ts);
 
     EXPECT_GT(ts, 0u) << "Timestamp must be non-zero";
 

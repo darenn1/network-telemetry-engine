@@ -109,8 +109,8 @@ std::string RabbitMqPublisher::buildJson(
 bool RabbitMqPublisher::connect() {
     if (conn_) disconnect();
  
-    constexpr int     MAX_ATTEMPTS   = 5;
-    constexpr int     RETRY_DELAY_S  = 3;
+    constexpr int     MAX_ATTEMPTS   = 3;
+    constexpr int     RETRY_DELAY_S  = 2;
  
     for (int attempt = 1; attempt <= MAX_ATTEMPTS; ++attempt) {
  
@@ -222,8 +222,8 @@ void RabbitMqPublisher::disconnect() {
     }
 }
  
-RabbitMqPublisher::RabbitMqPublisher(const PublisherConfig& config)
-    : config_(config), connected_(false)
+RabbitMqPublisher::RabbitMqPublisher(const PublisherConfig& config, std::atomic<bool>&     stop_flag)
+    : config_(config), stop_flag_(stop_flag), connected_(false)
 {
     connected_ = connect();
 }
@@ -237,14 +237,13 @@ bool RabbitMqPublisher::publish(
     const FlowRecord&    flow,
     bool                 is_retransmit)
 {
-    if (frame.protocol != 1  &&   // ICMP
-        frame.protocol != 6  &&   // TCP
-        frame.protocol != 17 &&   // UDP
-        frame.protocol != 0)      // ARP
-    {
+    if (frame.protocol != 1  &&
+        frame.protocol != 6  &&
+        frame.protocol != 17 &&
+        frame.protocol != 0) {
         return true;
     }
- 
+
     if (!connected_) {
         utils::log_warn("rabbitmq_publisher: attempting reconnect...");
         connected_ = connect();
@@ -253,14 +252,15 @@ bool RabbitMqPublisher::publish(
             return false;
         }
     }
- 
+
     const std::string json = buildJson(frame, flow, is_retransmit);
- 
+
     amqp_basic_properties_t props{};
-    props._flags        = AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_CONTENT_TYPE_FLAG;
-    props.delivery_mode = 1;  // non-persistent
+    props._flags        = AMQP_BASIC_DELIVERY_MODE_FLAG |
+                          AMQP_BASIC_CONTENT_TYPE_FLAG;
+    props.delivery_mode = 1;
     props.content_type  = amqp_cstring_bytes("application/json");
- 
+
     int rc = amqp_basic_publish(
         conn_,
         config_.channel,
@@ -268,42 +268,65 @@ bool RabbitMqPublisher::publish(
         amqp_cstring_bytes(config_.routing_key.c_str()),
         0, 0, &props,
         amqp_cstring_bytes(json.c_str()));
- 
+
     if (rc != AMQP_STATUS_OK) {
         utils::log_error("rabbitmq_publisher: publish failed (rc=" +
-                         std::to_string(rc) + ") — will reconnect next time");
+                         std::to_string(rc) + ")");
         connected_ = false;
         return false;
     }
- 
-    {
-        amqp_frame_t       confirm_frame{};
-        struct timeval     timeout{ .tv_sec = 1, .tv_usec = 0 };
- 
-        int wait_rc = amqp_simple_wait_frame_noblock(conn_, &confirm_frame, &timeout);
+
+    constexpr int MAX_CONFIRM_WAIT_MS = 5000;
+    constexpr int POLL_INTERVAL_MS    = 50;
+    int           waited_ms           = 0;
+    bool          confirmed           = false;
+
+    while (waited_ms < MAX_CONFIRM_WAIT_MS) {
+        amqp_frame_t   confirm_frame{};
+        struct timeval timeout{
+            .tv_sec  = 0,
+            .tv_usec = POLL_INTERVAL_MS * 1000
+        };
+
+        int wait_rc = amqp_simple_wait_frame_noblock(
+            conn_, &confirm_frame, &timeout);
+
+        if (wait_rc == AMQP_STATUS_TIMEOUT) {
+            waited_ms += POLL_INTERVAL_MS;
+            if (stop_flag_.load(std::memory_order_relaxed)) {
+                return false;
+            }
+            continue;
+        }
+
         if (wait_rc != AMQP_STATUS_OK) {
-            utils::log_error("rabbitmq_publisher: timed out waiting for publisher confirm — "
-                             "will reconnect next time");
+            utils::log_error("rabbitmq_publisher: confirm wait error rc=" +
+                             std::to_string(wait_rc));
             connected_ = false;
             return false;
         }
- 
+
         if (confirm_frame.frame_type == AMQP_FRAME_METHOD) {
             if (confirm_frame.payload.method.id == AMQP_BASIC_ACK_METHOD) {
-                // broker confirmed delivery — all good
-            } else if (confirm_frame.payload.method.id == AMQP_BASIC_NACK_METHOD) {
-                utils::log_error("rabbitmq_publisher: broker returned Basic.Nack — "
-                                 "frame dropped");
+                confirmed = true;
+                break;
+            } else if (confirm_frame.payload.method.id ==
+                       AMQP_BASIC_NACK_METHOD) {
+                utils::log_error("rabbitmq_publisher: Basic.Nack received");
                 return false;
-            } else {
-                utils::log_warn("rabbitmq_publisher: unexpected confirm frame method id=" +
-                                std::to_string(confirm_frame.payload.method.id));
             }
         }
+
+        waited_ms += POLL_INTERVAL_MS;
     }
- 
+
+    if (!confirmed) {
+        utils::log_error("rabbitmq_publisher: confirm timeout after " +
+                         std::to_string(MAX_CONFIRM_WAIT_MS) + "ms");
+        connected_ = false;
+        return false;
+    }
+
     return true;
 }
- 
-} // namespace pipeline
- 
+}

@@ -22,6 +22,11 @@
 
 namespace capture {
 
+static struct {
+    short orig_flags      = 0;
+    char  iface[IFNAMSIZ] = {};
+} g_socket_state;
+
 static void dropCapabilities() {
     cap_t caps = cap_get_proc();
     if (!caps) {
@@ -107,6 +112,9 @@ int openRawSocket() {
         return -1;
     }
 
+    g_socket_state.orig_flags = ifr.ifr_flags;
+    std::strncpy(g_socket_state.iface, iface, IFNAMSIZ - 1);
+
     ifr.ifr_flags |= IFF_PROMISC;
 
     if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0) {
@@ -126,10 +134,27 @@ int openRawSocket() {
 }
 
 void closeRawSocket(int fd) {
-    if (fd >= 0) {
-        close(fd);
-        std::cout << "[raw_socket] Socket closed\n";
+    if (fd < 0) return;
+ 
+    // Restore original interface flags — clears IFF_PROMISC on SIGINT/SIGTERM.
+    // Note: SIGKILL and crashes bypass this path; promiscuous mode will
+    // persist until the next clean shutdown or interface reset.
+    if (g_socket_state.iface[0] != '\0') {
+        struct ifreq ifr{};
+        std::strncpy(ifr.ifr_name, g_socket_state.iface, IFNAMSIZ - 1);
+        ifr.ifr_flags = g_socket_state.orig_flags;
+ 
+        if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0) {
+            std::cerr << "[raw_socket] Failed to restore flags: "
+                      << strerror(errno) << "\n";
+        } else {
+            std::cout << "[raw_socket] Promiscuous mode cleared on "
+                      << g_socket_state.iface << "\n";
+        }
     }
+ 
+    close(fd);
+    std::cout << "[raw_socket] Socket closed\n";
 }
 
 std::unordered_set<uint32_t> getLocalIps() {

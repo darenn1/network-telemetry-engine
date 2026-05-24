@@ -25,6 +25,7 @@ public:
 
     bool read(
         uint8_t*  out_data,
+        size_t    out_capacity,
         size_t&   out_size,
         uint64_t& out_timestamp
     );

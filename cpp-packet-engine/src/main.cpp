@@ -65,7 +65,7 @@ int main() {
  
     // ── RabbitMQ publisher ────────────────────────────────────────────────
     pipeline::PublisherConfig pub_cfg = pipeline::publisherConfigFromEnv();
-    pipeline::RabbitMqPublisher publisher(pub_cfg);
+    pipeline::RabbitMqPublisher publisher(pub_cfg, stop_flag);
  
     if (!publisher.isConnected()) {
         utils::log_error("Failed to connect to RabbitMQ — exiting");

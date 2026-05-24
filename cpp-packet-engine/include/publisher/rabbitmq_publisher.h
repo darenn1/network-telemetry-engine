@@ -26,7 +26,7 @@ PublisherConfig publisherConfigFromEnv();
 
 class RabbitMqPublisher {
 public:
-    explicit RabbitMqPublisher(const PublisherConfig& config);
+    explicit RabbitMqPublisher(const PublisherConfig& config, std::atomic<bool>&     stop_flag);
     ~RabbitMqPublisher();
 
     RabbitMqPublisher(const RabbitMqPublisher&)            = delete;
@@ -38,6 +38,7 @@ public:
 
 private:
     PublisherConfig     config_;
+    std::atomic<bool>&  stop_flag_;
     amqp_connection_state_t conn_  = nullptr;
     amqp_socket_t*          sock_  = nullptr;
     bool                    connected_ = false;
