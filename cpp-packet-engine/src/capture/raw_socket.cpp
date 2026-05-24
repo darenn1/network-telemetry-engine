@@ -136,12 +136,10 @@ int openRawSocket() {
 void closeRawSocket(int fd) {
     if (fd < 0) return;
  
-    // Restore original interface flags — clears IFF_PROMISC on SIGINT/SIGTERM.
-    // Note: SIGKILL and crashes bypass this path; promiscuous mode will
-    // persist until the next clean shutdown or interface reset.
     if (g_socket_state.iface[0] != '\0') {
         struct ifreq ifr{};
         std::strncpy(ifr.ifr_name, g_socket_state.iface, IFNAMSIZ - 1);
+        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
         ifr.ifr_flags = g_socket_state.orig_flags;
  
         if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0) {

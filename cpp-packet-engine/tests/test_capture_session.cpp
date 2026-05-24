@@ -136,7 +136,7 @@ TEST_F(CaptureSessionTest, BytesLandInBufferWithCorrectTimestamp) {
     size_t   out_size = 0;
     uint64_t out_ts   = 0;
  
-    ASSERT_TRUE(packet_buf.read(out, out_size, out_ts))
+    ASSERT_TRUE(packet_buf.read(out, sizeof(out), out_size, out_ts))
         << "No frame in buffer after captureLoop ran";
  
     EXPECT_EQ(out_size, frame.size())
@@ -176,7 +176,7 @@ TEST_F(CaptureSessionTest, MultipleFramesLandInFIFOOrder) {
         size_t   out_size = 0;
         uint64_t out_ts   = 0;
  
-        bool got = packet_buf.read(out, out_size, out_ts);
+        bool got = packet_buf.read(out, sizeof(out), out_size, out_ts);
         if (!got) break;  
  
         EXPECT_EQ(out_size, 64u)
@@ -252,7 +252,7 @@ TEST_F(CaptureSessionTest, TimestampsAreNonDecreasing) {
         size_t   out_size = 0;
         uint64_t out_ts   = 0;
  
-        if (!packet_buf.read(out, out_size, out_ts)) break;
+        if (!packet_buf.read(out, sizeof(out), out_size, out_ts)) break;
         frames_read++;
  
         EXPECT_GE(out_ts, prev_ts)
@@ -289,7 +289,7 @@ TEST_F(CaptureSessionTest, FrameSizesPreservedCorrectly) {
         size_t   out_size = 0;
         uint64_t out_ts   = 0;
  
-        if (!packet_buf.read(out, out_size, out_ts)) break;
+        if (!packet_buf.read(out, sizeof(out), out_size, out_ts)) break;
  
         EXPECT_EQ(out_size, sizes[i])
             << "Frame " << i << ": expected size " << sizes[i]
