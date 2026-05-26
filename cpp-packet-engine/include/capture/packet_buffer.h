@@ -38,8 +38,6 @@ public:
 private:
     RingBuffer ring_;
 
-    uint8_t slot_buf_[RingBuffer::SLOT_SIZE];
-
     static uint64_t nowMillis();
 };
 

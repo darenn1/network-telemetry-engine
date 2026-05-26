@@ -93,10 +93,13 @@ void captureLoop(
                 break;
             }
 
-            // No frame_count or debug prints — parsers now handle everything
             if (!packet_buf.write(frame_buf, static_cast<size_t>(bytes))) {
-                utils::log_warn("captureLoop: write() returned false — stopping");
-                goto cleanup;
+                if (stop_flag.load(std::memory_order_relaxed)) {
+                    goto cleanup;
+                }
+                utils::log_warn("captureLoop: frame dropped (size=" +
+                                std::to_string(bytes) + ")");
+                continue;
             }
         }
     }

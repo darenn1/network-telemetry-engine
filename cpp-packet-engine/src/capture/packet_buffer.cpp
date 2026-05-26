@@ -34,11 +34,12 @@ bool PacketBuffer::write(const uint8_t* frame_data, size_t frame_size) {
     }
 
     const uint64_t ts = nowMillis();
+    uint8_t slot_buf[RingBuffer::SLOT_SIZE];
 
-    std::memcpy(slot_buf_,                   &ts,        TIMESTAMP_SIZE);
-    std::memcpy(slot_buf_ + TIMESTAMP_SIZE,  frame_data, frame_size);
+    std::memcpy(slot_buf,                   &ts,        TIMESTAMP_SIZE);
+    std::memcpy(slot_buf + TIMESTAMP_SIZE,  frame_data, frame_size);
 
-    return ring_.write(slot_buf_, TIMESTAMP_SIZE + frame_size);
+    return ring_.write(slot_buf, TIMESTAMP_SIZE + frame_size);
 }
 
 
@@ -49,8 +50,9 @@ bool PacketBuffer::read(
     uint64_t& out_timestamp
 ) {
     size_t slot_size = 0;
+    uint8_t slot_buf[RingBuffer::SLOT_SIZE];
 
-    if (!ring_.read(slot_buf_, slot_size)) {
+    if (!ring_.read(slot_buf, slot_size)) {
         return false;   
     }
 
@@ -70,8 +72,8 @@ bool PacketBuffer::read(
         return false;
     }
 
-    std::memcpy(&out_timestamp, slot_buf_, TIMESTAMP_SIZE);
-    std::memcpy(out_data, slot_buf_ + TIMESTAMP_SIZE, out_size);
+    std::memcpy(&out_timestamp, slot_buf, TIMESTAMP_SIZE);
+    std::memcpy(out_data, slot_buf + TIMESTAMP_SIZE, out_size);
     return true;
 }
 
