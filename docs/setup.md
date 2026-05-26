@@ -25,6 +25,8 @@ need to change credentials, hostnames, or ports.
 ## Running with Docker Compose
 
 ```bash
+docker compose build
+
 # Start all services (RabbitMQ + MongoDB)
 docker compose up
 
@@ -47,7 +49,7 @@ cd cpp-packet-engine
 cmake --preset dev
 
 # Build
-cmake --build build/dev
+cmake --build --preset dev
 
 # Run tests
 ctest --test-dir build/dev --output-on-failure

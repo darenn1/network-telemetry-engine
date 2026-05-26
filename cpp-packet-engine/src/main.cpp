@@ -100,8 +100,12 @@ int main() {
 
 
           if (!filtered.has_value()) {
-              break;   // stop_flag fired inside read()
+              if (stop_flag.load(std::memory_order_relaxed)) {
+                    break;                   
+                }
+                continue;
           }
+
 
           auto dissected = pipeline::dissector_stage(*filtered, local_ips);
           if (!dissected.has_value()) {
