@@ -33,7 +33,7 @@ void captureLoop(
     }
 
     struct epoll_event ev{};
-    ev.events  = EPOLLIN;   
+    ev.events  = EPOLLIN;
     ev.data.fd = fd;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd, &ev) < 0) {
@@ -49,17 +49,16 @@ void captureLoop(
     utils::log_info("captureLoop: capture loop started");
 
     uint8_t frame_buf[FRAME_BUF_SIZE];
-
     struct epoll_event events[1];
 
     while (!stop_flag.load(std::memory_order_relaxed)) {
-
         const int n = epoll_wait(epoll_fd, events, 1, EPOLL_TIMEOUT_MS);
 
         if (n < 0) {
             if (errno == EINTR) {
                 continue;
             }
+
             utils::log_error("captureLoop: epoll_wait error: " +
                              std::string(strerror(errno)));
             break;
@@ -69,37 +68,47 @@ void captureLoop(
             continue;
         }
 
-        for (int i = 0; i < BATCH_DRAIN; i++) {
+        bool keep_draining = true;
+        while (keep_draining && !stop_flag.load(std::memory_order_relaxed)) {
+            keep_draining = false;
 
-            const ssize_t bytes = recvfrom(
-                fd,
-                frame_buf,
-                sizeof(frame_buf),
-                MSG_DONTWAIT,
-                nullptr,
-                nullptr
-            );
+            for (int i = 0; i < BATCH_DRAIN; i++) {
+                const ssize_t bytes = recvfrom(
+                    fd,
+                    frame_buf,
+                    sizeof(frame_buf),
+                    MSG_DONTWAIT,
+                    nullptr,
+                    nullptr
+                );
 
-            if (bytes < 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (bytes < 0) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                        break;
+                    }
+
+                    utils::log_error("captureLoop: recvfrom error: " +
+                                     std::string(strerror(errno)));
                     break;
                 }
-                utils::log_error("captureLoop: recvfrom error: " +
-                                 std::string(strerror(errno)));
-                break;
-            }
 
-            if (bytes == 0) {
-                break;
-            }
-
-            if (!packet_buf.write(frame_buf, static_cast<size_t>(bytes))) {
-                if (stop_flag.load(std::memory_order_relaxed)) {
-                    goto cleanup;
+                if (bytes == 0) {
+                    break;
                 }
-                utils::log_warn("captureLoop: frame dropped (size=" +
-                                std::to_string(bytes) + ")");
-                continue;
+
+                if (!packet_buf.write(frame_buf, static_cast<size_t>(bytes))) {
+                    if (stop_flag.load(std::memory_order_relaxed)) {
+                        goto cleanup;
+                    }
+
+                    utils::log_warn("captureLoop: frame dropped (size=" +
+                                    std::to_string(bytes) + ")");
+                    continue;
+                }
+
+                if (i == BATCH_DRAIN - 1) {
+                    keep_draining = true;
+                }
             }
         }
     }
