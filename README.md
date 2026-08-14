@@ -14,7 +14,7 @@ pipeline, and a React dashboard — connected by RabbitMQ and MongoDB.
 
 | Flow | Transport | Description |
 |---|---|---|
-| C++ → RabbitMQ | AMQP, JSON | One enriched frame per message, topic exchange |
+| C++ → RabbitMQ | AMQP, JSON | One enriched frame per message, direct exchange |
 | RabbitMQ → Spring Boot | AMQP, `@RabbitListener` | Spring consumes `raw_packets.spring` queue |
 | Spring Boot → MongoDB | MongoDB driver | Writes `traffic_flows` — one document per frame |
 | Spring Boot → React | SSE | Live telemetry stream + anomaly alerts + Historical data |
@@ -162,9 +162,9 @@ Full rationale in [docs/architecture.md](docs/architecture.md).
   Spring Boot and Python. Both generate stubs from the same file. Neither
   hand-edits generated code.
 
-- **RabbitMQ uses topic exchange** — routing key `packet.tcp.inbound` etc.
-  allows future consumers to bind selectively by protocol or direction with
-  no changes to the C++ publisher or Spring Boot consumer.
+- **RabbitMQ uses a direct exchange** — the publisher routes every enriched
+  frame with the fixed `packet.raw` key to the `raw_packets.spring` queue.
+  This keeps the single producer-to-consumer path explicit and point-to-point.
 
 - **Two threads in C++, thread pool in Spring Boot** — C++ pipeline has
   strict frame ordering requirements for stateful rules. Spring Boot's three

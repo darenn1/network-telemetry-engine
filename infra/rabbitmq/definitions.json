@@ -25,7 +25,7 @@
     {
       "name":        "raw_packets",
       "vhost":       "/",
-      "type":        "topic",
+      "type":        "direct",
       "durable":     true,
       "auto_delete": false,
       "internal":    false,
@@ -71,7 +71,7 @@
       "vhost":            "/",
       "destination":      "raw_packets.spring",
       "destination_type": "queue",
-      "routing_key":      "packet.#",
+      "routing_key":      "packet.raw",
       "arguments":        {}
     },
     {
